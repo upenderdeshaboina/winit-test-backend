@@ -24,19 +24,19 @@ const initializeDBandServer=async()=>{
                     sales_number text varchar(50),
                     customer_code text varchar(50),
                     customer_name text varchar(250),
-                    order_date datetime default real,
-                    total_amount float decimal(18,3)
+                    order_date datetime real,
+                    total_amount integer decimal(18,3)
                 )
             `)
         await db.run(`
                 create table if not exists orders(
                     id integer primary key autoincrement,
-                    sales_order_id integer,
+                    sales_order_id integer ,
                     item_code text varchar(50),
                     item_name text varchar(250),
-                    unit_price float decimal(18,2),
+                    unit_price integer decimal(18,2),
                     quantity integer decimal(18,2),
-                    total_price float decimal(18,2)
+                    total_price integer decimal(18,2)
                 )
             `)
     } catch (error) {
@@ -53,12 +53,7 @@ app.post('/customers',async(req,res)=>{
     try {
         const addCustomerQuery=`
             insert into customers
-            values (
-                sales_number=?,
-                customer_code=?,
-                customer_name=?,
-                total_amount=?
-            )
+            values (?,?,?,?,?,?)
         `
         const result=await db.run(addCustomerQuery,[salesOrderNumber,customerCode,customerName,totalAmount])
         console.log(result.lastID)
@@ -113,4 +108,5 @@ app.delete('/customers/:id',async(req,res)=>{
         console.log('Error deleting customer')
     }
 })
+
 module.exports=app
