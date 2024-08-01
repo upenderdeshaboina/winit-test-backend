@@ -24,7 +24,7 @@ const initializeDBandServer=async()=>{
                     sales_number text varchar(50),
                     customer_code text varchar(50),
                     customer_name text varchar(250),
-                    order_date datetime real,
+                    order_date datetime default real,
                     total_amount integer decimal(18,3)
                 )
             `)
@@ -32,14 +32,14 @@ const initializeDBandServer=async()=>{
                 create table if not exists orders(
                     id integer primary key autoincrement,
                     sales_order_id integer ,
-                    item_code text varchar(50),
+                    item_code integer varchar(50),
                     item_name text varchar(250),
                     unit_price integer decimal(18,2),
                     quantity integer decimal(18,2),
                     total_price integer decimal(18,2)
                 )
             `)
-    } catch (error) {
+    }catch(error){
         console.log(`Error Db: ${error.message}`)
         process.exit(1)
     }
@@ -53,7 +53,7 @@ app.post('/customers',async(req,res)=>{
     try {
         const addCustomerQuery=`
             insert into customers
-            values (?,?,?,?,?,?)
+            values (?,?,?,?)
         `
         const result=await db.run(addCustomerQuery,[salesOrderNumber,customerCode,customerName,totalAmount])
         console.log(result.lastID)
@@ -108,5 +108,54 @@ app.delete('/customers/:id',async(req,res)=>{
         console.log('Error deleting customer')
     }
 })
+app.post('/orders',async(req,res)=>{
+    const {salesOrderId,itemCode,itemName,unitPrice,quantity,totalPrice}=req.body
+    try {
+        const insertQuery=`
+            insert into orders
+            values(id,?,?,?,?,?)
+        `
+        await db.run(insertQuery,[salesOrderId,itemCode,itemName,unitPrice,quantity,totalPrice])
+        res.status(200)
+        res.send('item added successfully')
+    } catch (error) {
+        console.log(`Error adding item: ${error.message}`)
+        res.status(400)
+        res.send('error adding item')
+    }
+})
 
+app.get('/orders',async(req,res)=>{
+    try {
+        const query=`select * from orders`
+        const result=await db.all(query)
+        res.status(200)
+        res.send(result)
+    } catch (error) {
+        console.log(`error retrieving data: ${error.message}`)
+        res.status(400)
+        res.send('error retrieving data')
+    }
+})
+app.delete('/order/:id',async(req,res)=>{
+    const {id}=req.params
+    const getQuery=`select * from orders where id=?`
+    const result=await db.get(getQuery,[id])
+    if (!result){
+        try {
+            const query=`delete from orders where id=?`
+            const result=await db.run(query,[id])
+            if (result.changes>0){
+                res.status(200)
+                res.send('item deleted successfully')
+            }
+        } catch (error) {
+            console.log(`error deleting item : ${error.message}`)
+        }
+    }else{
+        res.status(400)
+        res.send('item not available')
+    }
+    
+})
 module.exports=app
